@@ -12,6 +12,7 @@ export default function PostScreen() {
   // Notes input state
   const [notes, setNotes] = useState("");
   const [notesHeight, setNotesHeight] = useState(0);
+  const [notesWidth, setNotesWidth] = useState(0);
 
   return (
     <View style={{ flex: 1 }}>
@@ -39,14 +40,20 @@ export default function PostScreen() {
               }
             />
 
-            {/* Notes section */}
+            {/* Free-form Notion-style notes section */}
             <TextInput
-              style={[styles.input, { height: Math.max(60, notesHeight), marginTop: 20 }]}
+              style={[styles.notesArea, {
+                height: Math.max(100, notesHeight),
+                width: Math.max(930, notesWidth)
+              }]}
               placeholder="Write your notes here..."
               value={notes}
               onChangeText={setNotes}
               multiline
               textAlignVertical="top"
+              scrollEnabled
+              underlineColorAndroid="transparent"
+              selectionColor="#000"
               onContentSizeChange={(e) =>
                 setNotesHeight(e.nativeEvent.contentSize.height)
               }
@@ -79,7 +86,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   leftColumn: {
-    flex: 1,
+    flex: 2,
     marginRight: 30,
     flexDirection: "column",
   },
@@ -105,6 +112,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#fff",
     textAlignVertical: "top",
+  },
+  notesArea: {
+    marginTop: 20,
+    fontSize: 16,
+    padding: 8,
+    backgroundColor: "transparent", // no box
+    borderWidth: 0,                   // no border
+    color: "#000",
   },
   sectionHeading: {
     fontSize: 28,
