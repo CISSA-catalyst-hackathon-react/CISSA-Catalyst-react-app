@@ -1,24 +1,22 @@
 [
   {
-    "id": "proj1",
-    "name": "My First Project",
+    "id": "1",
+    "name": "Project Alpha",
     "posts": [
       {
-        "id": "post1",
+        "id": "p1",
         "title": "First Post",
-        "type": "task",
-        "imageUri": "asset:/assets/images/magmacup.jpg",
+        "type": "Region",
+        "imageUri": null,
         "connections": [],
-        "projectId": "proj1"
-      },
-      {
-        "id": "post2",
-        "title": "Second Post",
-        "type": "note",
-        "imageUri": "asset:/assets/images/magmacup.jpg",
-        "connections": [],
-        "projectId": "proj1"
+        "projectId": "1"
       }
     ]
+  },
+  {
+    "id": "2",
+    "name": "Project Beta",
+    "posts": []
   }
 ]
+
