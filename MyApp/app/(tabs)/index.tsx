@@ -1,12 +1,20 @@
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Button, Platform, StyleSheet } from 'react-native';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import {useNavigation} from '@react-navigation/native';
+import { LandingSplitView } from './landpage';
+
+// Import RootStackParamList type from your navigation types file
+import type { RootStackParamList } from '@/types/navigation'; // Update the path as needed
+
+
 
 export default function HomeScreen() {
+  const navigation = useNavigation<import('@react-navigation/native').NavigationProp<RootStackParamList>>();
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -17,8 +25,9 @@ export default function HomeScreen() {
         />
       }>
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome! to react native</ThemedText>
+        <ThemedText type="title">Welcome! to react native 3</ThemedText>
         <HelloWave />
+
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 1: Try it</ThemedText>
@@ -65,6 +74,7 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 8,
   },
+  
   reactLogo: {
     height: 178,
     width: 290,

@@ -1,7 +1,11 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, Button, TouchableOpacity, Text } from 'react-native';
+import { useState } from "react";
+import { Link, useRouter } from "expo-router";
 
 export function LandingSplitView() {
+  const [count, setCount] = useState(0);
+  const router = useRouter()
   return (
     <View style={styles.container}>
       <View style={styles.sidebar}>
@@ -14,6 +18,9 @@ export function LandingSplitView() {
         {/* Add more buttons as needed */}
       </View>
       <View style={styles.content}>
+        <Link href="/" asChild>
+          <Button title="Go back?"/>
+        </Link>
         {/* Right side is empty for now */}
       </View>
     </View>
