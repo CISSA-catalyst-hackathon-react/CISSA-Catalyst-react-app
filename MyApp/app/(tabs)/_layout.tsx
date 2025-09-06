@@ -26,6 +26,11 @@ export default function TabLayout() {
           default: {},
         }),
       }}>
+      <Tabs.Screen 
+        name="intro" 
+        options={{ 
+          title: 'Intro', 
+          tabBarButton: () => null }} />
       <Tabs.Screen
         name="index"
         options={{

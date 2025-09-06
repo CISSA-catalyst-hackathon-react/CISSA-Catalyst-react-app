@@ -1,96 +1,260 @@
-import { Image } from 'expo-image';
-import { Button, Platform, StyleSheet } from 'react-native';
-import { ExternalLink } from '@/components/ExternalLink';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import {useNavigation} from '@react-navigation/native';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
+import React, { useEffect, useRef } from 'react';
+import {
+  Animated,
+  Dimensions,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
-// Import RootStackParamList type from your navigation types file
-// import type { RootStackParamList } from '@/types/navigation'; // Update the path as needed
+const { width, height } = Dimensions.get('window');
 
+export default function IntroScreen() {
+  const pulse = useRef(new Animated.Value(0)).current;
 
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 1800, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0, duration: 1800, useNativeDriver: true }),
+      ])
+    ).start();
+  }, [pulse]);
 
-export default function HomeScreen() {
-  // const navigation = useNavigation<import('@react-navigation/native').NavigationProp<RootStackParamList>>();
+  const scale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.02] });
+  const glow  = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.6] });
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome! to react native 3</ThemedText>
-        <HelloWave />
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn moreeee</ThemedText>
-        </ExternalLink>
+    <View style={styles.root}>
+      {/* Gradient background */}
+      <LinearGradient
+        colors={['#0f1021', '#1f2a44', '#4f46e5']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
 
-        <Link href="/(tabs)/postPage">
-          <ThemedText type="link">post page</ThemedText>
-        </Link>
-        <Link href="/(tabs)/landPage">
-          <ThemedText type="link">land page</ThemedText>
-        </Link>
+      {/* Shooting stars */}
+      {Array.from({ length: 5 }).map((_, i) => (
+        <ShootingStar key={i} delay={i * 1500} />
+      ))}
 
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      {/* Floating sparkles */}
+      {Array.from({ length: 15 }).map((_, i) => (
+      <Sparkle
+        key={i}
+        top={Math.random() * height}       // anywhere vertically
+        left={Math.random() * width}       // anywhere horizontally
+        size={Math.floor(Math.random() * 4) + 3} // random size 3–6  // random speed 2–4s
+      
+      />
+))}
+
+      <SafeAreaView style={styles.safe}>
+        {/* Center Card */}
+        <Animated.View style={[styles.cardWrap, { transform: [{ scale }] }]}>
+          <BlurView intensity={75} tint="dark" style={styles.card}>
+            <Text style={styles.kicker}>WELCOME TO</Text>
+            <Text style={styles.title}>JUST PLAN</Text>
+            <Text style={styles.subtitle}>
+              Map ideas. Connect works. Visualize your creative journey.
+            </Text>
+
+            {/* Glowing effect under button */}
+            <Animated.View style={{ opacity: glow }}>
+              <LinearGradient
+                colors={['#a78bfa', '#60a5fa']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.buttonGlow}
+              />
+            </Animated.View>
+
+            {/* Start button */}
+            <Link href="../(tabs)/landPage" asChild>
+              <Pressable style={({ pressed }) => [
+                styles.startBtn,
+                pressed && { transform: [{ scale: 0.98 }] }
+              ]}>
+                <Text style={styles.startTxt}>Start</Text>
+              </Pressable>
+            </Link>
+
+            {/* Credits */}
+            <Text style={styles.credits}>made by Kazu, Steven, Gabriel, Safywan</Text>
+          </BlurView>
+        </Animated.View>
+      </SafeAreaView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
+/* ========== Shooting Star Component ========== */
+function ShootingStar({ delay }: { delay: number }) {
+  const anim = useRef(new Animated.Value(0)).current;
 
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  useEffect(() => {
+    const loop = () => {
+      anim.setValue(0);
+      Animated.sequence([
+        Animated.delay(delay), // wait before starting
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 3500,
+          useNativeDriver: true,
+        }),
+      ]).start(() => loop());
+    };
+    loop();
+  }, [anim, delay]);
+
+  const randomXStart = useRef(-Math.random() * 1000 - 200).current;  // -200 to -1000
+  const randomXEnd   = useRef(width + Math.random() * 300).current; // width to width+300
+
+  const randomYStart = useRef(-Math.random() * 800 - 100).current;  // -100 to -700
+  const randomYEnd   = useRef(height + Math.random() * 600).current;
+  const translateX = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [randomXStart, randomXEnd],
+  });
+
+  const translateY = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [randomYStart, randomYEnd],
+  });
+
+  const opacity = anim.interpolate({
+    inputRange: [0, 0.1, 0.8, 1],
+    outputRange: [0, 1, 0.4, 0],
+  });
+
+  return (
+    <Animated.View
+      style={{
+        position: 'absolute',
+        width: 80,
+        height: 2,
+        backgroundColor: 'white',
+        opacity,
+        transform: [
+          { translateX },
+          { translateY },
+          { rotateZ: '30deg' },
+        ],
+        shadowColor: '#fff',
+        shadowOpacity: 0.8,
+        shadowRadius: 4,
+      }}
+    />
+  );
+}
+
+/* ========== Sparkle Component ========== */
+function Sparkle({ top, left, size }: { top: number; left: number; size: number }) {
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, { toValue: 1, duration: 2800, useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 0, duration: 2800, useNativeDriver: true }),
+      ])
+    ).start();
+  }, [anim]);
+
+  const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [0, -8] });
+  const opacity = anim.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.9] });
+
+  return (
+    <Animated.View
+      style={{
+        position: 'absolute',
+        top,
+        left,
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: '#ffffff',
+        transform: [{ translateY }],
+        opacity,
+        shadowColor: '#fff',
+        shadowOpacity: 0.9,
+        shadowRadius: 6,
+      }}
+    />
+  );
+}
+
+/* ========== Styles ========== */
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#0f1021' },
+  safe: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+
+  /* Center card */
+  cardWrap: {
+    width: Math.min(width - 40, 460),
+    shadowColor: '#000',
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 12,
   },
+  card: {
+    borderRadius: 24,
+    paddingVertical: 28,
+    paddingHorizontal: 22,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    overflow: 'hidden',
+    alignItems: 'center',
+    gap: 10,
+  },
+  kicker: {
+    color: '#c7d2fe',
+    letterSpacing: 2,
+    fontSize: 12,
+    textTransform: 'uppercase',
+  },
+  title: {
+    color: '#fff',
+    fontSize: 28,
+    fontWeight: '800',
+    textAlign: 'center',
+    lineHeight: 34,
+  },
+  subtitle: {
+    color: 'rgba(255,255,255,0.85)',
+    textAlign: 'center',
+    marginTop: 6,
+  },
+  buttonGlow: {
+    position: 'absolute',
+    bottom: 92,
+    left: 22,
+    right: 22,
+    height: 54,
+    borderRadius: 14,
+    opacity: 0.35,
+    filter: 'blur(20px)' as any,
+  },
+  startBtn: {
+    marginTop: 18,
+    backgroundColor: '#4f46e5',
+    paddingVertical: 14,
+    paddingHorizontal: 22,
+    borderRadius: 14,
+    minWidth: 180,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#4f46e5',
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  startTxt: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  credits: { color: 'rgba(255,255,255,0.7)', marginTop: 16, fontSize: 12 },
 });
