@@ -1,10 +1,11 @@
 import { View, Text, StyleSheet, Button, ScrollView } from "react-native";
 import { useState } from "react";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 
 
 export default function PostScreen() {
   const [count, setCount] = useState(0);
+  const router = useRouter()
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
