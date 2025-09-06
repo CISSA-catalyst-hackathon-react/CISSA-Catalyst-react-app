@@ -35,7 +35,7 @@ export default function HomeScreen() {
         <Link href="/(tabs)/postPage">
           <ThemedText type="link">post page</ThemedText>
         </Link>
-        <Link href="/(tabs)/landpage">
+        <Link href="/(tabs)/landPage">
           <ThemedText type="link">land page</ThemedText>
         </Link>
 
