@@ -1,53 +1,56 @@
-import React from 'react';
-import { View, StyleSheet, Button, TouchableOpacity, Text } from 'react-native';
+import { View, Text, StyleSheet, Button } from "react-native";
 import { useState } from "react";
-import { Link, useRouter } from "expo-router";
+import { Link } from "expo-router";
 
-export function LandingSplitView() {
+export default function PostScreen() {
   const [count, setCount] = useState(0);
-  const router = useRouter()
+
   return (
-    <View style={styles.container}>
-      <View style={styles.sidebar}>
-        <TouchableOpacity style={styles.button}>
-          <Text>Btn 1</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button}>
-          <Text>Btn 2</Text>
-        </TouchableOpacity>
-        {/* Add more buttons as needed */}
+    <View style={styles.splitContainer}>
+      <View style={styles.leftPane}>
+        <Text style={styles.leftTitle}>Sidebar</Text>
+        <Button title="Go back?" onPress={() => {}} />
+        {/* Add more sidebar buttons or content here */}
       </View>
-      <View style={styles.content}>
-        <Link href="/" asChild>
-          <Button title="Go back?"/>
-        </Link>
-        {/* Right side is empty for now */}
+      <View style={styles.rightPane}>
+        <Text style={styles.title}>Hello from land Page 👋</Text>
+        <Text style={styles.subtitle}>You clicked {count} times</Text>
+        <Button title="Click me" onPress={() => setCount(count + 1)} />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
+  splitContainer: {
     flex: 1,
+    flexDirection: "row",
+    backgroundColor: "#f5f5f5",
   },
-  sidebar: {
-    width: 60, // Thin sidebar
-    backgroundColor: '#eee',
-    alignItems: 'center',
+  leftPane: {
+    width: 80, // smaller sidebar
+    backgroundColor: "#e0e0e0",
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 16,
   },
-  button: {
-    marginVertical: 8,
-    padding: 8,
-    backgroundColor: '#ccc',
-    borderRadius: 4,
-    width: '80%',
-    alignItems: 'center',
+  leftTitle: {
+    fontWeight: "bold",
+    marginBottom: 16,
   },
-  content: {
+  rightPane: {
     flex: 1,
-    backgroundColor: '#fff',
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    marginBottom: 20,
   },
 });

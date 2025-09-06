@@ -1,20 +1,21 @@
 import { Image } from 'expo-image';
 import { Button, Platform, StyleSheet } from 'react-native';
+import { ExternalLink } from '@/components/ExternalLink';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import {useNavigation} from '@react-navigation/native';
-import { LandingSplitView } from './landpage';
+import { Link } from 'expo-router';
 
 // Import RootStackParamList type from your navigation types file
-import type { RootStackParamList } from '@/types/navigation'; // Update the path as needed
+// import type { RootStackParamList } from '@/types/navigation'; // Update the path as needed
 
 
 
 export default function HomeScreen() {
-  const navigation = useNavigation<import('@react-navigation/native').NavigationProp<RootStackParamList>>();
+  // const navigation = useNavigation<import('@react-navigation/native').NavigationProp<RootStackParamList>>();
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -27,6 +28,16 @@ export default function HomeScreen() {
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Welcome! to react native 3</ThemedText>
         <HelloWave />
+        <ExternalLink href="https://docs.expo.dev/router/introduction">
+          <ThemedText type="link">Learn moreeee</ThemedText>
+        </ExternalLink>
+
+        <Link href="/(tabs)/postPage">
+          <ThemedText type="link">post page</ThemedText>
+        </Link>
+        <Link href="/(tabs)/landpage">
+          <ThemedText type="link">land page</ThemedText>
+        </Link>
 
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
@@ -74,7 +85,7 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 8,
   },
-  
+
   reactLogo: {
     height: 178,
     width: 290,
