@@ -113,11 +113,11 @@ function ShootingStar({ delay }: { delay: number }) {
     loop();
   }, [anim, delay]);
 
-  const randomXStart = useRef(-Math.random() * 1000 - 200).current;  // -200 to -1000
+  const randomXStart = useRef(-Math.random() * 800 - 200).current;  // -200 to -1000
   const randomXEnd   = useRef(width + Math.random() * 300).current; // width to width+300
 
-  const randomYStart = useRef(-Math.random() * 800 - 100).current;  // -100 to -700
-  const randomYEnd   = useRef(height + Math.random() * 600).current;
+  const randomYStart = useRef(-Math.random() * 600 - 100).current;  // -100 to -700
+  const randomYEnd   = useRef(height + Math.random() * 300).current;
   const translateX = anim.interpolate({
     inputRange: [0, 1],
     outputRange: [randomXStart, randomXEnd],
