@@ -1,0 +1,24 @@
+[
+  {
+    "id": "proj1",
+    "name": "My First Project",
+    "posts": [
+      {
+        "id": "post1",
+        "title": "First Post",
+        "type": "task",
+        "imageUri": "asset:/assets/images/magmacup.jpg",
+        "connections": [],
+        "projectId": "proj1"
+      },
+      {
+        "id": "post2",
+        "title": "Second Post",
+        "type": "note",
+        "imageUri": "asset:/assets/images/magmacup.jpg",
+        "connections": [],
+        "projectId": "proj1"
+      }
+    ]
+  }
+]
