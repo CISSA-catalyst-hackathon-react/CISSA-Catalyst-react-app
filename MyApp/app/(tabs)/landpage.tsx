@@ -1,15 +1,18 @@
-import { View, Text, StyleSheet, Button, ScrollView, TextInput } from "react-native";
+import { View, Text, StyleSheet, Button, ScrollView, TextInput, TouchableOpacity, Image } from "react-native";
 import { useState } from "react";
-import { Link } from "expo-router";
+import { useRouter } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 
 export default function PostScreen() {
-  const [count, setCount] = useState(0);
   const [rectangles, setRectangles] = useState<number[]>([]);
   const [inputs, setInputs] = useState<string[]>([]);
+  const [images, setImages] = useState<(string | null)[]>([]);
+  const router = useRouter();
 
   const handleAddRectangle = () => {
     setRectangles([...rectangles, rectangles.length]);
     setInputs([...inputs, ""]);
+    setImages([...images, null]);
   };
 
   const handleInputChange = (text: string, idx: number) => {
@@ -28,17 +31,40 @@ export default function PostScreen() {
     rows.push(rectangles.slice(i, i + 3));
   }
 
+  // Handle rectangle click: navigate to DashboardView with index or name
+  const handleRectanglePress = (idx: number) => {
+    router.push({
+      pathname: "/(tabs)/DashboardView",
+      params: { dashboardId: idx, dashboardName: inputs[idx] }
+    });
+  };
+
+  // Handle image picker
+  const handlePickImage = async (idx: number) => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const newImages = [...images];
+      newImages[idx] = result.assets[0].uri;
+      setImages(newImages);
+    }
+  };
+
   return (
     <View style={styles.splitContainer}>
       <View style={styles.leftPane}>
         <Text style={styles.leftTitle}>Sidebar</Text>
-        <Button title="Go back?" onPress={() => {}} />
-        <Button title="+" onPress={handleAddRectangle} disabled={!canAddRectangle} />
+        <Button title="back" onPress={() => router.push("../(tabs)/index")} />
+        <Button title="+" onPress={handleAddRectangle} disabled={!canAddRectangle}/>
       </View>
+
       <ScrollView style={styles.rightPane} contentContainerStyle={styles.rightPaneContent}>
-        <Text style={styles.title}>Hello from Post Page 👋</Text>
-        <Text style={styles.subtitle}>You clicked {count} times</Text>
-        <Button title="Click me" onPress={() => setCount(count + 1)} />
+        <Text style={styles.title}>Landing Page</Text>
+        <Text style={styles.title}>Add your dashboard!</Text>
         {/* Render rectangles in rows */}
         {rows.map((row, rowIdx) => (
           <View key={rowIdx} style={styles.rectangleRow}>
@@ -46,12 +72,31 @@ export default function PostScreen() {
               const globalIdx = rowIdx * 3 + idx;
               return (
                 <View key={globalIdx} style={styles.rectangleContainer}>
-                  <View style={styles.rectangle} />
+                  <TouchableOpacity
+                    style={styles.rectangle}
+                    onPress={() => handleRectanglePress(globalIdx)}
+                  >
+                    {images[globalIdx] ? (
+                      <Image
+                        source={{ uri: images[globalIdx] }}
+                        style={styles.dashboardImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <Text style={styles.rectangleText}>
+                        {inputs[globalIdx] || "Dashboard"}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                  <Button
+                    title={images[globalIdx] ? "Change Image" : "Add Image"}
+                    onPress={() => handlePickImage(globalIdx)}
+                  />
                   <TextInput
                     style={styles.input}
                     value={inputs[globalIdx] || ""}
                     onChangeText={text => handleInputChange(text, globalIdx)}
-                    placeholder="Enter text"
+                    placeholder="Enter dashboard name"
                   />
                 </View>
               );
@@ -93,10 +138,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
   },
-  subtitle: {
-    fontSize: 16,
-    marginBottom: 20,
-  },
   rectangleRow: {
     flexDirection: "row",
     justifyContent: "center",
@@ -113,14 +154,28 @@ const styles = StyleSheet.create({
     backgroundColor: "#90caf9",
     borderRadius: 8,
     marginBottom: 6,
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  dashboardImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 8,
+  },
+  rectangleText: {
+    color: "#333",
+    fontSize: 20,
+    fontWeight: "bold",
   },
   input: {
     width: 100,
     height: 32,
-    borderColor: "#90caf9",
-    borderWidth: 1,
+    borderColor: "#ffffffff",
+    borderWidth: 2,
     borderRadius: 6,
     paddingHorizontal: 8,
     backgroundColor: "#fff",
+    marginTop: 4,
   },
 });
