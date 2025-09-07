@@ -1,4 +1,6 @@
 export type Connection = {
-  name: string;         // e.g. "family"
-  connected_to: string; // postId of the connected post
+  id: string;
+  name: string;      // e.g. "family"
+  postA: string;     // postId of one post
+  postB: string;     // postId of the other post
 };

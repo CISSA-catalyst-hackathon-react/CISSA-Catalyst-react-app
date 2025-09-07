@@ -130,7 +130,7 @@ export default function PostPage({ postId, project, onClose, onUpdateProject }: 
             </TouchableOpacity>
           </View>
           
-          // ...inside your component, after loading post and project...
+          {/* Right column */}
 
           <View style={{ marginTop: 24 }}>
             <Text style={{ fontWeight: "bold", fontSize: 18 }}>Connections:</Text>
