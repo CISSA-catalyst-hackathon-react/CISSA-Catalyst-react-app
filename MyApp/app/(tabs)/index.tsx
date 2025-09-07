@@ -76,7 +76,7 @@ export default function IntroScreen() {
             </Animated.View>
 
             {/* Start button */}
-            <Link href="../(tabs)/landPage" asChild>
+            <Link href="../(tabs)/landpage" asChild>
               <Pressable style={({ pressed }) => [
                 styles.startBtn,
                 pressed && { transform: [{ scale: 0.98 }] }
