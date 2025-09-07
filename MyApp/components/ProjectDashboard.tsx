@@ -4,6 +4,8 @@ import { Project } from "@/models/Project";
 import { Post } from "@/models/Post";
 import PostPage from "@/app/(tabs)/postPage";
 import { FontAwesome } from "@expo/vector-icons";
+import { saveProjects, getProjects, addConnection } from "@/storage/storage";
+import { Connection } from "@/models/Connection";
 
 type ConnectionLabel = {
   from: string;
@@ -34,8 +36,6 @@ export default function ProjectDashboard({ project, onBack, onUpdateProject }: P
 
   // Store positions for each post as Animated.ValueXY
   const [positions, setPositions] = useState<{ [id: string]: Animated.ValueXY }>({});
-  // Store connection labels
-  const [connectionLabels, setConnectionLabels] = useState<ConnectionLabel[]>([]);
 
   // Initialize positions for each post
   React.useEffect(() => {
@@ -53,40 +53,50 @@ export default function ProjectDashboard({ project, onBack, onUpdateProject }: P
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentProject.posts.length]);
 
-  const addPost = () => {
-    const newPost: Post = {
-      id: Date.now().toString(),
-      title: "New Post",
-      type: "Custom",
-      imageUri: null,
-      connections: [],
-      projectId: project.id,
-      notes: "",
-    };
-    const updated = { ...currentProject, posts: [...currentProject.posts, newPost] };
-    setCurrentProject(updated);
-    onUpdateProject(updated);
+  const addPost = async () => {
+  const newPost: Post = {
+    id: Date.now().toString(),
+    title: "New Post",
+    type: "Custom",
+    imageUri: null,
+    projectId: currentProject.id,
+    notes: "",
   };
+  // Update in storage
+  const allProjects = await getProjects();
+  const idx = allProjects.findIndex(p => p.id === currentProject.id);
+  if (idx !== -1) {
+    const updatedProject = {
+      ...allProjects[idx],
+      posts: [...allProjects[idx].posts, newPost],
+    };
+    allProjects[idx] = updatedProject;
+    await saveProjects(allProjects);
+    setCurrentProject(updatedProject);
+    onUpdateProject(updatedProject);
+  }
+};
 
+  // Open a post and reload the latest project from storage after update
   const openPost = (postId: string) => {
     setSelectedPostId(postId);
   };
 
-  // Handle connection logic
-  const handleNodePress = (postId: string) => {
+  // Handle connection logic (project-level)
+  const handleNodePress = async (postId: string) => {
     if (connectMode) {
       if (!sourceNodeId) {
         setSourceNodeId(postId); // Start connection from this node
       } else if (sourceNodeId !== postId) {
-        // Connect sourceNodeId to postId
-        const updatedPosts = currentProject.posts.map((post) => {
-          if (post.id === sourceNodeId && !post.connections.includes(postId)) {
-            return { ...post, connections: [...post.connections, postId] };
-          }
-          return post;
-        });
-        setCurrentProject({ ...currentProject, posts: updatedPosts });
-        onUpdateProject({ ...currentProject, posts: updatedPosts });
+        // Add a new connection at the project level
+        const newConnection: Connection = {
+          id: Date.now().toString(),
+          name: "", // You can set a default or open a modal for naming
+          postA: sourceNodeId,
+          postB: postId,
+        };
+        await addConnection(currentProject.id, newConnection);
+        await reloadProject();
         setSourceNodeId(sourceNodeId); // Keep source for multi-connection
       }
     } else if (!dragMode) {
@@ -102,108 +112,89 @@ export default function ProjectDashboard({ project, onBack, onUpdateProject }: P
     }
   };
 
-  // Handle line click to name relationship
-  const handleLinePress = (from: string, to: string) => {
-    setLabelModalFrom(from);
-    setLabelModalTo(to);
-    const existing = connectionLabels.find(l => l.from === from && l.to === to);
-    setLabelInput(existing ? existing.label : "");
-    setLabelModalVisible(true);
-  };
-
+  // Modal for naming relationship (optional, not wired to project-level connections in this sample)
   const saveLabel = () => {
-    if (labelModalFrom && labelModalTo) {
-      setConnectionLabels(prev => {
-        const filtered = prev.filter(l => !(l.from === labelModalFrom && l.to === labelModalTo));
-        return [...filtered, { from: labelModalFrom, to: labelModalTo, label: labelInput }];
-      });
-    }
     setLabelModalVisible(false);
     setLabelModalFrom(null);
     setLabelModalTo(null);
     setLabelInput("");
   };
 
+  // Reload the latest project from storage
+  const reloadProject = async () => {
+    const allProjects = await getProjects();
+    const freshProject = allProjects.find(p => p.id === currentProject.id);
+    if (freshProject) setCurrentProject(freshProject);
+  };
+
+  // Called after saving a post in PostPage
+  const handleUpdateProject = async (updated: Project) => {
+    // Reload the latest project from storage to ensure UI is up-to-date
+    const allProjects = await getProjects();
+    const freshProject = allProjects.find(p => p.id === updated.id);
+    if (freshProject) {
+      setCurrentProject(freshProject);
+      onUpdateProject(freshProject);
+    }
+  };
+
+  // Draw lines for connections (project-level)
+  const renderConnections = () => {
+    if (!currentProject.connections) return null;
+    return currentProject.connections.map((conn) => {
+      const from = positions[conn.postA];
+      const to = positions[conn.postB];
+      if (!from || !to) return null;
+      // @ts-ignore
+      const fromX = from.x._value + 40, fromY = from.y._value + 40;
+      // @ts-ignore
+      const toX = to.x._value + 40, toY = to.y._value + 40;
+      // Label logic can be added here if you wish
+      return (
+        <View
+          key={conn.id}
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            width: W,
+            height: H,
+            pointerEvents: "box-none",
+          }}
+        >
+          {/* Clickable line using SVG */}
+          <svg
+            width={W}
+            height={H}
+            style={{ position: "absolute", left: 0, top: 0 }}
+          >
+            <line
+              x1={fromX}
+              y1={fromY}
+              x2={toX}
+              y2={toY}
+              stroke="#6366f1"
+              strokeWidth="3"
+            />
+          </svg>
+        </View>
+      );
+    });
+  };
+
   if (selectedPostId) {
     return (
       <PostPage
         postId={selectedPostId}
-        onClose={() => setSelectedPostId(null)}
+        onClose={async () => {
+          await reloadProject();
+          setSelectedPostId(null);
+        }}
         project={currentProject}
-        onUpdateProject={onUpdateProject}
+        onUpdateProject={handleUpdateProject}
       />
     );
   }
-
-  // Draw lines for connections
-  const renderConnections = () => {
-    return currentProject.posts.flatMap((post) =>
-      post.connections.map((targetId) => {
-        const from = positions[post.id];
-        const to = positions[targetId];
-        if (!from || !to) return null;
-        // @ts-ignore
-        const fromX = from.x._value + 40, fromY = from.y._value + 40;
-        // @ts-ignore
-        const toX = to.x._value + 40, toY = to.y._value + 40;
-        const labelObj = connectionLabels.find(l => l.from === post.id && l.to === targetId);
-
-        return (
-          <View
-            key={`${post.id}-${targetId}`}
-            style={{
-              position: "absolute",
-              left: 0,
-              top: 0,
-              width: W,
-              height: H,
-              pointerEvents: "box-none",
-            }}
-          >
-            {/* Clickable line using SVG */}
-            <svg
-              width={W}
-              height={H}
-              style={{ position: "absolute", left: 0, top: 0 }}
-            >
-              <line
-                x1={fromX}
-                y1={fromY}
-                x2={toX}
-                y2={toY}
-                stroke="#6366f1"
-                strokeWidth="3"
-                onClick={() => connectMode && handleLinePress(post.id, targetId)}
-                style={{ cursor: connectMode ? "pointer" : "default" }}
-              />
-            </svg>
-            {/* Label at the midpoint */}
-            {labelObj && labelObj.label && (
-              <View
-                style={{
-                  position: "absolute",
-                  left: (fromX + toX) / 2 - 40,
-                  top: (fromY + toY) / 2 - 12,
-                  backgroundColor: "#fff",
-                  paddingHorizontal: 8,
-                  paddingVertical: 2,
-                  borderRadius: 8,
-                  borderWidth: 1,
-                  borderColor: "#6366f1",
-                  minWidth: 40,
-                  alignItems: "center",
-                }}
-              >
-                <Text style={{ color: "#6366f1", fontWeight: "bold", fontSize: 13 }}>
-                  {labelObj.label}
-                </Text>
-              </View>
-            )}
-          </View>
-        );
-      })
-    );
-  };
 
   return (
     <Pressable style={{ flex: 1, backgroundColor: "#f3f4f6" }} onPress={handleBackgroundPress}>
@@ -348,7 +339,7 @@ export default function ProjectDashboard({ project, onBack, onUpdateProject }: P
             : "Drag or Connect"}
         </Text>
       </View>
-      {/* Modal for naming relationship */}
+      {/* Modal for naming relationship (optional, not wired to project-level connections in this sample) */}
       <Modal
         visible={labelModalVisible}
         transparent
@@ -393,4 +384,3 @@ export default function ProjectDashboard({ project, onBack, onUpdateProject }: P
     </Pressable>
   );
 }
-
