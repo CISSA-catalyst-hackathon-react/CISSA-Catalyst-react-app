@@ -74,7 +74,7 @@ export default function LandPage() {
     <View style={styles.splitContainer}>
       <View style={styles.leftPane}>
         <Text style={styles.leftTitle}>Sidebar</Text>
-        <Button title="+" onPress={handleShowAddForm} />
+        <Button color={"#573bc9ff"} title="+" onPress={handleShowAddForm} />
       </View>
       <ScrollView
         ref={scrollViewRef}
@@ -114,12 +114,12 @@ export default function LandPage() {
               onChangeText={setNewProjectName}
               placeholder="Enter dashboard name"
             />
-            <Button title={newProjectImage ? "Change Image" : "Add Image"} onPress={handlePickImage} />
+            <Button color={"#2a1c63ff"} title={newProjectImage ? "Change Image" : "Add Image"} onPress={handlePickImage} />
             {newProjectImage && (
               <Image source={{ uri: newProjectImage }} style={styles.dashboardImageInput} resizeMode="cover" />
             )}
-            <Button title="Add Dashboard" onPress={handleAddProject} />
-            <Button title="Cancel" onPress={() => setShowAddForm(false)} color="#888" />
+            <Button color={"#2a1c63ff"} title="Add Dashboard" onPress={handleAddProject} />
+            <Button color={"#2a1c63ff"} title="Cancel" onPress={() => setShowAddForm(false)} />
           </View>
         )}
       </ScrollView>
@@ -131,11 +131,10 @@ const styles = StyleSheet.create({
   splitContainer: {
     flex: 1,
     flexDirection: "row",
-    backgroundColor: "#f5f5f5",
   },
   leftPane: {
     width: 80,
-    backgroundColor: "#e0e0e0",
+    backgroundColor: "#382585ff",
     justifyContent: "flex-start",
     alignItems: "center",
     paddingVertical: 16,
@@ -146,7 +145,7 @@ const styles = StyleSheet.create({
   },
   rightPane: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#1a113fff",
   },
   rightPaneContent: {
     alignItems: "center",
@@ -170,7 +169,7 @@ const styles = StyleSheet.create({
   rectangle: {
     width: 300,
     height: 500,
-    backgroundColor: "#90caf9",
+    backgroundColor: "#573bc9ff",
     borderRadius: 8,
     marginBottom: 6,
     justifyContent: "center",
@@ -196,11 +195,11 @@ const styles = StyleSheet.create({
   input: {
     width: 160,
     height: 32,
-    borderColor: "#90caf9",
+    borderColor: "#573bc9ff",
     borderWidth: 1,
     borderRadius: 6,
     paddingHorizontal: 8,
-    backgroundColor: "#fff",
+    backgroundColor: "#423576ff",
     marginTop: 4,
     marginBottom: 4,
   },
@@ -210,9 +209,18 @@ const styles = StyleSheet.create({
     padding: 12,
     width: 300,
     height: 500,
-    backgroundColor: "#90caf9",
+    backgroundColor: "#573bc9ff",
     borderRadius: 8,
     marginBottom: 100,
     overflow: "hidden",
+  },
+  addButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 6,
+    marginVertical: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 120,
   },
 });
