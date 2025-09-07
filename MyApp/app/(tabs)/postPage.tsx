@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { Project } from "@/models/Project";
 import { Post } from "@/models/Post";
-import { getProjects, saveProjects } from "@/storage/storage";
+import { getProjects, saveProjects, updatePost } from "@/storage/storage";
 
 type Props = {
   postId: string;
@@ -39,40 +39,38 @@ export default function PostPage({ postId, project, onClose, onUpdateProject }: 
 
   if (!post) return <Text>Loading post...</Text>;
 
-  async function handleSave(
-  project: Project,
-  postId: String,
-  updatedPost: Post,
-  onUpdateProject: (updated: Project) => void
-  ) {
-    try {
-      // 1. Update the post in the project's posts array
-      const updatedPosts = project.posts.map(p =>
-        p.id === updatedPost.id ? updatedPost : p
-      );
+  const handleSave = async () => {
+    if (!post) return;
+    console.log("Saving post...");
 
-      const updatedProject: Project = { ...project, posts: updatedPosts };
+    // 1. Create an updated post object with the latest edits
+    const updatedPost: Post = {
+      ...post,
+      title,
+      notes,
+    };
 
-      // 2. Load all projects from storage
-      const allProjects = await getProjects();
+    // 2. Update the post in storage
+    await updatePost(updatedPost);
 
-      // 3. Replace the updated project in the projects array
-      const updatedProjectsArray = allProjects.map(p =>
-        p.id === updatedProject.id ? updatedProject : p
-      );
+    // 3. Reload the updated project from storage
+    const allProjects = await getProjects();
+    const updatedProject = allProjects.find(p => p.id === project.id);
 
-      // 4. Save the updated projects array back to storage
-      await saveProjects(updatedProjectsArray);
-
-      // 5. Call the parent updater to update state in the UI
+    // 4. Notify parent to refresh UI
+    if (updatedProject) {
       onUpdateProject(updatedProject);
 
-      console.log("Post saved successfully!");
-    } catch (error) {
-      console.error("Error saving post:", error);
+      const refreshedPost = updatedProject.posts.find(p => p.id === postId);
+      if (refreshedPost) {
+        setPost(refreshedPost);
+        setTitle(refreshedPost.title);
+        setNotes(refreshedPost.notes || "");
+      }
     }
-  }
+  };
 
+  
   return (
     <View style={{ flex: 1 }}>
       {/* Back button */}
@@ -126,7 +124,7 @@ export default function PostPage({ postId, project, onClose, onUpdateProject }: 
                 borderRadius: 8,
                 alignItems: "center",
               }}
-              onPress={() => handleSave(project, postId, post, onUpdateProject)}
+              onPress={handleSave}
             >
               <Text style={{ color: "#fff", fontWeight: "bold" }}>Save Post</Text>
             </TouchableOpacity>

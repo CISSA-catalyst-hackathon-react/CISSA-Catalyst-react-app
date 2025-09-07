@@ -4,7 +4,7 @@ import { Project } from "@/models/Project";
 import { Post } from "@/models/Post";
 import PostCard from "./PostCard";
 import PostPage from "@/app/(tabs)/postPage";
-import { saveProjects } from "@/storage/storage";
+import { getProjects, saveProjects } from "@/storage/storage";
 
 type Props = {
   project: Project;
@@ -31,9 +31,21 @@ export default function ProjectDashboard({ project, onBack, onUpdateProject }: P
     onUpdateProject(updated);
   };
 
-  const openPost = (postId: string) => {
-    setSelectedPostId(postId);
+
+  const openPost = async (postId: string) => {
+    // Fetch the latest project from storage
+    const allProjects = await getProjects();
+    const freshProject = allProjects.find(p => p.id === currentProject.id);
+    if (freshProject) {
+      setCurrentProject(freshProject);
+      setSelectedPostId(postId);
+    }
   };
+
+  const handleUpdateProject = (updated: Project) => {
+    setCurrentProject(updated);
+    onUpdateProject(updated);
+  }
 
   if (selectedPostId) {
     return (
