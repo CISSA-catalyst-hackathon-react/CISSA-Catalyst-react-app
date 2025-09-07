@@ -19,30 +19,30 @@ const { width: W, height: H } = Dimensions.get("window");
 
 export default function DashboardView() {
   // ---- Hardcoded test project
-  const [currentProject, setCurrentProject] = useState<Project>({
-    id: "1",
-    name: "My Dashboard Project",
-    posts: [
-      {
-          id: "p1", title: "Post 1", type: "note",
-          imageUri: null,
-          connections: [],
-          projectId: ""
-      },
-      {
-          id: "p2", title: "Post 2", type: "image",
-          imageUri: null,
-          connections: [],
-          projectId: ""
-      },
-      {
-          id: "p3", title: "Post 3", type: "link",
-          imageUri: null,
-          connections: [],
-          projectId: ""
-      },
-    ],
-  });
+  // const [currentProject, setCurrentProject] = useState<Project>({
+  //   id: "1",
+  //   name: "My Dashboard Project",
+  //   posts: [
+  //     {
+  //         id: "p1", title: "Post 1", type: "note",
+  //         imageUri: null,
+  //         connections: [],
+  //         projectId: ""
+  //     },
+  //     {
+  //         id: "p2", title: "Post 2", type: "image",
+  //         imageUri: null,
+  //         connections: [],
+  //         projectId: ""
+  //     },
+  //     {
+  //         id: "p3", title: "Post 3", type: "link",
+  //         imageUri: null,
+  //         connections: [],
+  //         projectId: ""
+  //     },
+  //   ],
+  // });
 
   const [addPostModalVisible, setAddPostModalVisible] = useState(false);
   const [newPostTitle, setNewPostTitle] = useState("");

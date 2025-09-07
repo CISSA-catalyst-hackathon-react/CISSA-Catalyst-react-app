@@ -155,6 +155,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 10,
+    color: "#d3caffff",
   },
   rectangleRow: {
     flexDirection: "row",
