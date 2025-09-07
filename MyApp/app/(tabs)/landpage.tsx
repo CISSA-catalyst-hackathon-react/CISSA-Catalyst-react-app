@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Button, ScrollView, TextInput, TouchableOpacity, Image } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { getProjects, addProject } from "../../storage/storage";
@@ -11,6 +11,7 @@ export default function LandPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectImage, setNewProjectImage] = useState<string | null>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     getProjects().then(setProjects);
@@ -42,6 +43,13 @@ export default function LandPage() {
     rows.push(projects.slice(i, i + 3));
   }
 
+  const handleShowAddForm = () => {
+    setShowAddForm(true);
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 300);
+  };
+
   if (currentProject) {
     return (
       <ProjectDashboard
@@ -55,9 +63,13 @@ export default function LandPage() {
     <View style={styles.splitContainer}>
       <View style={styles.leftPane}>
         <Text style={styles.leftTitle}>Sidebar</Text>
-        <Button title="+" onPress={() => setShowAddForm(true)} />
+        <Button title="+" onPress={handleShowAddForm} />
       </View>
-      <ScrollView style={styles.rightPane} contentContainerStyle={styles.rightPaneContent}>
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.rightPane}
+        contentContainerStyle={styles.rightPaneContent}
+      >
         <Text style={styles.title}>Your Dashboards</Text>
         {/* Display projects in rows of 3 */}
         {rows.map((row, rowIdx) => (
@@ -84,7 +96,7 @@ export default function LandPage() {
         ))}
         {/* Add Project Form */}
         {showAddForm && (
-          <View style={styles.addForm}>
+          <View style={[styles.rectangle, styles.addForm]}>
             <TextInput
               style={styles.input}
               value={newProjectName}
@@ -93,7 +105,7 @@ export default function LandPage() {
             />
             <Button title={newProjectImage ? "Change Image" : "Add Image"} onPress={handlePickImage} />
             {newProjectImage && (
-              <Image source={{ uri: newProjectImage }} style={styles.dashboardImage} resizeMode="cover" />
+              <Image source={{ uri: newProjectImage }} style={styles.dashboardImageInput} resizeMode="cover" />
             )}
             <Button title="Add Dashboard" onPress={handleAddProject} />
             <Button title="Cancel" onPress={() => setShowAddForm(false)} color="#888" />
@@ -159,6 +171,11 @@ const styles = StyleSheet.create({
     height: "100%",
     borderRadius: 8,
   },
+  dashboardImageInput: {
+    width: "70%",
+    height: "70%",
+    borderRadius: 8,
+  },
   rectangleText: {
     color: "#333",
     fontSize: 20,
@@ -178,14 +195,13 @@ const styles = StyleSheet.create({
   },
   addForm: {
     alignItems: "center",
-    marginTop: 16,
-    marginBottom: 16,
+    justifyContent: "center",
     padding: 12,
-    backgroundColor: "#e3e3e3",
     width: 300,
     height: 500,
+    backgroundColor: "#90caf9",
     borderRadius: 8,
-    justifyContent: "center",
+    marginBottom: 100,
     overflow: "hidden",
   },
 });
