@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Button, ScrollView, TextInput, TouchableOpacity, Image } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { getProjects, addProject } from "../../storage/storage";
+import { getProjects, addProject, saveProjects } from "../../storage/storage";
 import { Project } from "@/models/Project";
 import ProjectDashboard from "@/components/ProjectDashboard";
 
@@ -37,6 +37,16 @@ export default function LandPage() {
     }
   };
 
+  const updateProjects = async (projectsToSave: Project[]) => {
+    setProjects(projectsToSave);
+    await saveProjects(projectsToSave);
+  };
+  const updateProject = async (updated: Project) => {
+    const updatedProjects = projects.map(p => (p.id === updated.id ? updated : p));
+    await updateProjects(updatedProjects);
+    setCurrentProject(updated);
+  };
+
   // Group projects into rows of 3
   const rows: Project[][] = [];
   for (let i = 0; i < projects.length; i += 3) {
@@ -54,7 +64,8 @@ export default function LandPage() {
     return (
       <ProjectDashboard
         project={currentProject}
-        onGoBack={() => setCurrentProject(null)}
+        onBack={() => setCurrentProject(null)}
+        onUpdateProject={updateProject}
       />
     );
   }
