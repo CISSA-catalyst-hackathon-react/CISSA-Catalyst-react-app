@@ -1,108 +1,104 @@
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Button, ScrollView, TextInput, TouchableOpacity, Image } from "react-native";
-import { useState } from "react";
-import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
+import { getProjects, addProject } from "../../storage/storage";
+import { Project } from "@/models/Project";
+import ProjectDashboard from "@/components/ProjectDashboard";
 
-export default function PostScreen() {
-  const [rectangles, setRectangles] = useState<number[]>([]);
-  const [inputs, setInputs] = useState<string[]>([]);
-  const [images, setImages] = useState<(string | null)[]>([]);
-  const router = useRouter();
+export default function LandPage() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [currentProject, setCurrentProject] = useState<Project | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [newProjectImage, setNewProjectImage] = useState<string | null>(null);
 
-  const handleAddRectangle = () => {
-    setRectangles([...rectangles, rectangles.length]);
-    setInputs([...inputs, ""]);
-    setImages([...images, null]);
+  useEffect(() => {
+    getProjects().then(setProjects);
+  }, []);
+
+  const handleAddProject = async () => {
+    if (!newProjectName.trim()) return;
+    const project = await addProject(newProjectName.trim(), newProjectImage);
+    setProjects([...projects, project]);
+    setNewProjectName("");
+    setNewProjectImage(null);
+    setShowAddForm(false);
   };
 
-  const handleInputChange = (text: string, idx: number) => {
-    const newInputs = [...inputs];
-    newInputs[idx] = text;
-    setInputs(newInputs);
-  };
-
-  // Only allow adding if last input is filled or no rectangles yet
-  const canAddRectangle =
-    rectangles.length === 0 || (inputs[inputs.length - 1] && inputs[inputs.length - 1].trim().length > 0);
-
-  // Group rectangles into rows of 3
-  const rows = [];
-  for (let i = 0; i < rectangles.length; i += 3) {
-    rows.push(rectangles.slice(i, i + 3));
-  }
-
-  // Handle rectangle click: navigate to DashboardView with index or name
-  const handleRectanglePress = (idx: number) => {
-    router.push({
-      pathname: "/(tabs)/DashboardView",
-      params: { dashboardId: idx, dashboardName: inputs[idx] }
-    });
-  };
-
-  // Handle image picker
-  const handlePickImage = async (idx: number) => {
+  const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 1,
     });
-
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      const newImages = [...images];
-      newImages[idx] = result.assets[0].uri;
-      setImages(newImages);
+      setNewProjectImage(result.assets[0].uri);
     }
   };
+
+  // Group projects into rows of 3
+  const rows: Project[][] = [];
+  for (let i = 0; i < projects.length; i += 3) {
+    rows.push(projects.slice(i, i + 3));
+  }
+
+  if (currentProject) {
+    return (
+      <ProjectDashboard
+        project={currentProject}
+        onGoBack={() => setCurrentProject(null)}
+      />
+    );
+  }
 
   return (
     <View style={styles.splitContainer}>
       <View style={styles.leftPane}>
         <Text style={styles.leftTitle}>Sidebar</Text>
-        <Button title="back" onPress={() => router.push("../(tabs)/index")} />
-        <Button title="+" onPress={handleAddRectangle} disabled={!canAddRectangle}/>
+        <Button title="+" onPress={() => setShowAddForm(true)} />
       </View>
-
       <ScrollView style={styles.rightPane} contentContainerStyle={styles.rightPaneContent}>
-        <Text style={styles.title}>Landing Page</Text>
-        <Text style={styles.title}>Add your dashboard!</Text>
-        {/* Render rectangles in rows */}
+        <Text style={styles.title}>Your Dashboards</Text>
+        {/* Display projects in rows of 3 */}
         {rows.map((row, rowIdx) => (
           <View key={rowIdx} style={styles.rectangleRow}>
-            {row.map((rect, idx) => {
-              const globalIdx = rowIdx * 3 + idx;
-              return (
-                <View key={globalIdx} style={styles.rectangleContainer}>
-                  <TouchableOpacity
-                    style={styles.rectangle}
-                    onPress={() => handleRectanglePress(globalIdx)}
-                  >
-                    {images[globalIdx] ? (
-                      <Image
-                        source={{ uri: images[globalIdx] }}
-                        style={styles.dashboardImage}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <Text style={styles.rectangleText}>
-                        {inputs[globalIdx] || "Dashboard"}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                  <Button
-                    title={images[globalIdx] ? "Change Image" : "Add Image"}
-                    onPress={() => handlePickImage(globalIdx)}
-                  />
-                  <TextInput
-                    style={styles.input}
-                    value={inputs[globalIdx] || ""}
-                    onChangeText={text => handleInputChange(text, globalIdx)}
-                    placeholder="Enter dashboard name"
-                  />
-                </View>
-              );
-            })}
+            {row.map((project) => (
+              <View key={project.id} style={styles.rectangleContainer}>
+                <TouchableOpacity
+                  style={styles.rectangle}
+                  onPress={() => setCurrentProject(project)}
+                >
+                  {project.imageUri ? (
+                    <Image
+                      source={{ uri: project.imageUri }}
+                      style={styles.dashboardImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Text style={styles.rectangleText}>{project.name}</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            ))}
           </View>
         ))}
+        {/* Add Project Form */}
+        {showAddForm && (
+          <View style={styles.addForm}>
+            <TextInput
+              style={styles.input}
+              value={newProjectName}
+              onChangeText={setNewProjectName}
+              placeholder="Enter dashboard name"
+            />
+            <Button title={newProjectImage ? "Change Image" : "Add Image"} onPress={handlePickImage} />
+            {newProjectImage && (
+              <Image source={{ uri: newProjectImage }} style={styles.dashboardImage} resizeMode="cover" />
+            )}
+            <Button title="Add Dashboard" onPress={handleAddProject} />
+            <Button title="Cancel" onPress={() => setShowAddForm(false)} color="#888" />
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -117,7 +113,7 @@ const styles = StyleSheet.create({
   leftPane: {
     width: 80,
     backgroundColor: "#e0e0e0",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     alignItems: "center",
     paddingVertical: 16,
   },
@@ -150,7 +146,7 @@ const styles = StyleSheet.create({
   },
   rectangle: {
     width: 300,
-    height: 450,
+    height: 500,
     backgroundColor: "#90caf9",
     borderRadius: 8,
     marginBottom: 6,
@@ -167,15 +163,29 @@ const styles = StyleSheet.create({
     color: "#333",
     fontSize: 20,
     fontWeight: "bold",
+    textAlign: "center",
   },
   input: {
-    width: 100,
+    width: 160,
     height: 32,
-    borderColor: "#ffffffff",
-    borderWidth: 2,
+    borderColor: "#90caf9",
+    borderWidth: 1,
     borderRadius: 6,
     paddingHorizontal: 8,
     backgroundColor: "#fff",
     marginTop: 4,
+    marginBottom: 4,
+  },
+  addForm: {
+    alignItems: "center",
+    marginTop: 16,
+    marginBottom: 16,
+    padding: 12,
+    backgroundColor: "#e3e3e3",
+    width: 300,
+    height: 500,
+    borderRadius: 8,
+    justifyContent: "center",
+    overflow: "hidden",
   },
 });
