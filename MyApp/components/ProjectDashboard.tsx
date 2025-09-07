@@ -1,102 +1,62 @@
-import React from "react";
-import { ScrollView, View, Text, TextInput, Button, StyleSheet } from "react-native";
-import * as ImagePicker from "expo-image-picker";
+import React, { useState, useEffect } from "react";
+import { ScrollView, Text, Button, View } from "react-native";
 import { Project } from "@/models/Project";
 import { Post } from "@/models/Post";
-import PostCard from "@/components/PostCard";
+import PostCard from "./PostCard";
+import PostPage from "@/app/(tabs)/postPage";
+import { saveProjects } from "@/storage/storage";
 
-interface ProjectDashboardProps {
+type Props = {
   project: Project;
   onBack: () => void;
-  onUpdateProject: (project: Project) => void;
-}
+  onUpdateProject: (updated: Project) => void;
+};
 
-export default function ProjectDashboard({ project, onBack, onUpdateProject }: ProjectDashboardProps) {
-  const [newPostTitle, setNewPostTitle] = React.useState("");
-  const [newPostType, setNewPostType] = React.useState("");
+export default function ProjectDashboard({ project, onBack, onUpdateProject }: Props) {
+  const [currentProject, setCurrentProject] = useState<Project>(project);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   const addPost = () => {
-    if (!newPostTitle.trim() || !newPostType.trim()) return;
-
     const newPost: Post = {
       id: Date.now().toString(),
-      title: newPostTitle,
-      type: newPostType,
+      title: "New Post",
+      type: "Custom",
       imageUri: null,
       connections: [],
       projectId: project.id,
+      notes: "",
     };
-
-    const updated = { ...project, posts: [...project.posts, newPost] };
+    const updated = { ...currentProject, posts: [...currentProject.posts, newPost] };
+    setCurrentProject(updated);
     onUpdateProject(updated);
-
-    setNewPostTitle("");
-    setNewPostType("");
   };
 
-  const updatePost = (updatedPost: Post) => {
-    const updatedPosts = project.posts.map(p => (p.id === updatedPost.id ? updatedPost : p));
-    onUpdateProject({ ...project, posts: updatedPosts });
+  const openPost = (postId: string) => {
+    setSelectedPostId(postId);
   };
 
-  const pickImage = async (post: Post) => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      const updatedPost = { ...post, imageUri: result.assets[0].uri };
-      updatePost(updatedPost);
-    }
-  };
+  if (selectedPostId) {
+    return (
+      <PostPage
+        postId={selectedPostId}
+        onClose={() => setSelectedPostId(null)}
+        project={currentProject}
+        onUpdateProject={onUpdateProject}
+      />
+    );
+  }
 
   return (
-    <ScrollView style={styles.container}>
-      <Button title="Back to Projects" onPress={onBack} />
-
-      <Text style={styles.title}>{project.name}</Text>
-
-      <View style={styles.addPostRow}>
-        <TextInput
-          placeholder="Post title"
-          value={newPostTitle}
-          onChangeText={setNewPostTitle}
-          style={styles.input}
-        />
-        <TextInput
-          placeholder="Post type"
-          value={newPostType}
-          onChangeText={setNewPostType}
-          style={styles.input}
-        />
-        <Button title="Add Post" onPress={addPost} />
-      </View>
-
-      {project.posts.map(post => (
-        <PostCard
-          key={post.id}
-          post={post}
-          onUpdatePost={updatePost}
-          onPickImage={pickImage}
-        />
+    <ScrollView style={{ flex: 1, padding: 12 }}>
+      <Button title="Back to Dashboards" onPress={onBack} />
+      <Text style={{ fontSize: 24, fontWeight: "bold", marginVertical: 10 }}>
+        {currentProject.name}
+      </Text>
+      <Button title="Add Post" onPress={addPost} />
+      {currentProject.posts.map((post) => (
+        <PostCard key={post.id} post={post} onPress={() => openPost(post.id)} />
       ))}
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 20 },
-  title: { fontSize: 24, fontWeight: "bold", marginVertical: 10, color: "white" },
-  addPostRow: { flexDirection: "row", marginBottom: 20, alignItems: "center" },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 5,
-    marginRight: 5,
-    color: "white",
-  },
-});
