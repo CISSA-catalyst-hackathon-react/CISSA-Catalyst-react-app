@@ -1,10 +1,11 @@
-export interface Post {
+
+export type Post = {
   id: string;
   title: string;
   type: string;
-  imageUri: string | null;       // Default or user-picked URI
+  imageUri: string | null;   // ✅ allow null
   connections: string[];
   projectId: string;
-}
+};
 
 
