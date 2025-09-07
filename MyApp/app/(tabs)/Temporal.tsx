@@ -1,7 +1,8 @@
 import { Project } from "@/models/Project";
-import { addPost } from "@/storage/storage";
+import { addPost, getProjects } from "@/storage/storage";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useMemo, useState } from "react";
+import { useLocalSearchParams } from "expo-router";
+import React, { useEffect, useMemo, useState } from "react";
 import {
     Button,
     Dimensions,
@@ -18,37 +19,24 @@ import Svg, { Circle, G, Line, Text as SvgText } from "react-native-svg";
 const { width: W, height: H } = Dimensions.get("window");
 
 export default function DashboardView() {
-  // ---- Hardcoded test project
-  // const [currentProject, setCurrentProject] = useState<Project>({
-  //   id: "1",
-  //   name: "My Dashboard Project",
-  //   posts: [
-  //     {
-  //         id: "p1", title: "Post 1", type: "note",
-  //         imageUri: null,
-  //         connections: [],
-  //         projectId: ""
-  //     },
-  //     {
-  //         id: "p2", title: "Post 2", type: "image",
-  //         imageUri: null,
-  //         connections: [],
-  //         projectId: ""
-  //     },
-  //     {
-  //         id: "p3", title: "Post 3", type: "link",
-  //         imageUri: null,
-  //         connections: [],
-  //         projectId: ""
-  //     },
-  //   ],
-  // });
-
+  const { projectId } = useLocalSearchParams();
+  const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [addPostModalVisible, setAddPostModalVisible] = useState(false);
   const [newPostTitle, setNewPostTitle] = useState("");
   const [newPostType, setNewPostType] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
+
+  useEffect(() => {
+    getProjects().then(projects => {
+      const found = projects.find(p => p.id === projectId);
+      if (found) setCurrentProject(found);
+    });
+  }, [projectId]);
+
+  if (!currentProject) {
+    return <Text>Loading...</Text>;
+  }
 
   // Layout center
   const centerX = W / 2;
