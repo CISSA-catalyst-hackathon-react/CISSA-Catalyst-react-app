@@ -1,3 +1,4 @@
+import { Connection } from "./Connection";
 
 export type Post = {
   id: string;
@@ -5,7 +6,6 @@ export type Post = {
   type: string;
   notes?: string;
   imageUri: string | null;   // ✅ allow null
-  connections: string[];
   projectId: string;
 };
 

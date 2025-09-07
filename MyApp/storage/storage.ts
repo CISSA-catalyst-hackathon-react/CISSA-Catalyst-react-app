@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Project } from "@/models/Project";
 import { Post } from "@/models/Post";
 import projectsJson from "@/data/projects.json";
-
+import { Connection } from "@/models/Connection";
 // dashboard = project for naming sake
 // Load all projects
 export async function getProjects(): Promise<Project[]> {
@@ -22,7 +22,8 @@ export async function addProject(name: string, imageUri: string | null = null): 
     id: Date.now().toString(),
     name,
     imageUri, // Save imageUri
-    posts: []
+    posts: [],
+    connections: []
   };
   projects.push(newProject);
   await saveProjects(projects);
@@ -40,7 +41,6 @@ export async function addPost(projectId: string, title: string, type: string): P
     title,
     type,
     imageUri: null,
-    connections: [],
     projectId
   };
   project.posts.push(newPost);
@@ -54,6 +54,25 @@ export async function updatePost(updatedPost: Post): Promise<void> {
   const project = projects.find(p => p.id === updatedPost.projectId);
   if (!project) return;
   project.posts = project.posts.map(p => (p.id === updatedPost.id ? updatedPost : p));
+  await saveProjects(projects);
+}
+// ...existing code...
+
+export async function addConnection(projectId: string, connection: Connection): Promise<void> {
+  const projects = await getProjects();
+  const project = projects.find(p => p.id === projectId);
+  if (!project) return;
+  project.connections = [...(project.connections || []), connection];
+  await saveProjects(projects);
+}
+
+export async function updateConnection(projectId: string, updatedConnection: Connection): Promise<void> {
+  const projects = await getProjects();
+  const project = projects.find(p => p.id === projectId);
+  if (!project) return;
+  project.connections = project.connections.map(conn =>
+    conn.id === updatedConnection.id ? updatedConnection : conn
+  );
   await saveProjects(projects);
 }
 

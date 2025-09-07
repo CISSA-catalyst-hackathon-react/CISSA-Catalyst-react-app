@@ -129,15 +129,24 @@ export default function PostPage({ postId, project, onClose, onUpdateProject }: 
               <Text style={{ color: "#fff", fontWeight: "bold" }}>Save Post</Text>
             </TouchableOpacity>
           </View>
+          
+          // ...inside your component, after loading post and project...
 
-          {/* Right column */}
-          <View style={styles.rightColumn}>
-            <Text style={styles.sectionHeading}>Relationships</Text>
-            {post.connections.length > 0 ? (
-              post.connections.map((c, idx) => <Text key={idx}>- {c}</Text>)
-            ) : (
-              <Text>No connections yet</Text>
-            )}
+          <View style={{ marginTop: 24 }}>
+            <Text style={{ fontWeight: "bold", fontSize: 18 }}>Connections:</Text>
+            {project.connections
+              .filter(conn => conn.postA === post.id || conn.postB === post.id)
+              .map(conn => {
+                const otherPostId = conn.postA === post.id ? conn.postB : conn.postA;
+                const otherPost = project.posts.find(p => p.id === otherPostId);
+                return (
+                  <View key={conn.id} style={{ marginVertical: 4 }}>
+                    <Text>
+                      {conn.name} → {otherPost ? otherPost.title : "Unknown Post"}
+                    </Text>
+                  </View>
+                );
+              })}
           </View>
         </View>
       </ScrollView>

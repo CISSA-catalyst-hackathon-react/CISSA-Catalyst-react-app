@@ -1,24 +1,58 @@
 [
   {
     "id": "1",
-    "name": "Project Alpha",
+    "name": "Family Tree",
     "imageUri": null,
     "posts": [
       {
         "id": "p1",
-        "title": "First Post",
-        "type": "Region",
+        "title": "Father",
+        "type": "Person",
         "imageUri": null,
-        "connections": [],
-        "projectId": "1"
+        "projectId": "1",
+        "notes": ""
+      },
+      {
+        "id": "p2",
+        "title": "Son",
+        "type": "Person",
+        "imageUri": null,
+        "projectId": "1",
+        "notes": ""
+      }
+    ],
+    "connections": [
+      {
+        "id": "c1",
+        "name": "family",
+        "postA": "p1",
+        "postB": "p2"
       }
     ]
   },
   {
     "id": "2",
-    "name": "Project Beta",
+    "name": "Work Projects",
     "imageUri": null,
-    "posts": []
+    "posts": [
+      {
+        "id": "p3",
+        "title": "Project Alpha",
+        "type": "Project",
+        "imageUri": null,
+        "projectId": "2",
+        "notes": ""
+      },
+      {
+        "id": "p4",
+        "title": "Project Beta",
+        "type": "Project",
+        "imageUri": null,
+        "projectId": "2",
+        "notes": ""
+      }
+    ],
+    "connections": []
   }
 ]
 

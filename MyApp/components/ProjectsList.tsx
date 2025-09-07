@@ -20,6 +20,7 @@ export default function ProjectsList({ projects, onSelectProject, onUpdateProjec
       name: newProjectName.trim(),
       posts: [],
       imageUri: null, // New projects start without an image
+      connections: [] // New projects start without connections
     };
 
     // update parent state
