@@ -60,7 +60,7 @@ export default function IntroScreen() {
         <Animated.View style={[styles.cardWrap, { transform: [{ scale }] }]}>
           <BlurView intensity={75} tint="dark" style={styles.card}>
             <Text style={styles.kicker}>WELCOME TO</Text>
-            <Text style={styles.title}>JUST PLAN</Text>
+            <Text style={styles.title}>JustPlan</Text>
             <Text style={styles.subtitle}>
               Map ideas. Connect works. Visualize your creative journey.
             </Text>
