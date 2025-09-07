@@ -1,108 +1,127 @@
+import React, { useState, useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Button, ScrollView, TextInput, TouchableOpacity, Image } from "react-native";
-import { useState } from "react";
-import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
+import { getProjects, addProject, saveProjects } from "../../storage/storage";
+import { Project } from "@/models/Project";
+import ProjectDashboard from "@/components/ProjectDashboard";
 
-export default function PostScreen() {
-  const [rectangles, setRectangles] = useState<number[]>([]);
-  const [inputs, setInputs] = useState<string[]>([]);
-  const [images, setImages] = useState<(string | null)[]>([]);
-  const router = useRouter();
+export default function LandPage() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [currentProject, setCurrentProject] = useState<Project | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [newProjectImage, setNewProjectImage] = useState<string | null>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
-  const handleAddRectangle = () => {
-    setRectangles([...rectangles, rectangles.length]);
-    setInputs([...inputs, ""]);
-    setImages([...images, null]);
+  useEffect(() => {
+    getProjects().then(setProjects);
+  }, []);
+
+  const handleAddProject = async () => {
+    if (!newProjectName.trim()) return;
+    const project = await addProject(newProjectName.trim(), newProjectImage);
+    setProjects([...projects, project]);
+    setNewProjectName("");
+    setNewProjectImage(null);
+    setShowAddForm(false);
   };
 
-  const handleInputChange = (text: string, idx: number) => {
-    const newInputs = [...inputs];
-    newInputs[idx] = text;
-    setInputs(newInputs);
-  };
-
-  // Only allow adding if last input is filled or no rectangles yet
-  const canAddRectangle =
-    rectangles.length === 0 || (inputs[inputs.length - 1] && inputs[inputs.length - 1].trim().length > 0);
-
-  // Group rectangles into rows of 3
-  const rows = [];
-  for (let i = 0; i < rectangles.length; i += 3) {
-    rows.push(rectangles.slice(i, i + 3));
-  }
-
-  // Handle rectangle click: navigate to DashboardView with index or name
-  const handleRectanglePress = (idx: number) => {
-    router.push({
-      pathname: "/(tabs)/DashboardView",
-      params: { dashboardId: idx, dashboardName: inputs[idx] }
-    });
-  };
-
-  // Handle image picker
-  const handlePickImage = async (idx: number) => {
+  const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 1,
     });
-
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      const newImages = [...images];
-      newImages[idx] = result.assets[0].uri;
-      setImages(newImages);
+      setNewProjectImage(result.assets[0].uri);
     }
   };
+
+  const updateProjects = async (projectsToSave: Project[]) => {
+    setProjects(projectsToSave);
+    await saveProjects(projectsToSave);
+  };
+  const updateProject = async (updated: Project) => {
+    const updatedProjects = projects.map(p => (p.id === updated.id ? updated : p));
+    await updateProjects(updatedProjects);
+    setCurrentProject(updated);
+  };
+
+  // Group projects into rows of 3
+  const rows: Project[][] = [];
+  for (let i = 0; i < projects.length; i += 3) {
+    rows.push(projects.slice(i, i + 3));
+  }
+
+  const handleShowAddForm = () => {
+    setShowAddForm(true);
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 300);
+  };
+
+  if (currentProject) {
+    return (
+      <ProjectDashboard
+        project={currentProject}
+        onBack={() => setCurrentProject(null)}
+        onUpdateProject={updateProject}
+      />
+    );
+  }
 
   return (
     <View style={styles.splitContainer}>
       <View style={styles.leftPane}>
         <Text style={styles.leftTitle}>Sidebar</Text>
-        <Button title="back" onPress={() => router.push("../(tabs)/index")} />
-        <Button title="+" onPress={handleAddRectangle} disabled={!canAddRectangle}/>
+        <Button color={"#573bc9ff"} title="+" onPress={handleShowAddForm} />
       </View>
-
-      <ScrollView style={styles.rightPane} contentContainerStyle={styles.rightPaneContent}>
-        <Text style={styles.title}>Landing Page</Text>
-        <Text style={styles.title}>Add your dashboard!</Text>
-        {/* Render rectangles in rows */}
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.rightPane}
+        contentContainerStyle={styles.rightPaneContent}
+      >
+        <Text style={styles.title}>Your Dashboards</Text>
+        {/* Display projects in rows of 3 */}
         {rows.map((row, rowIdx) => (
           <View key={rowIdx} style={styles.rectangleRow}>
-            {row.map((rect, idx) => {
-              const globalIdx = rowIdx * 3 + idx;
-              return (
-                <View key={globalIdx} style={styles.rectangleContainer}>
-                  <TouchableOpacity
-                    style={styles.rectangle}
-                    onPress={() => handleRectanglePress(globalIdx)}
-                  >
-                    {images[globalIdx] ? (
-                      <Image
-                        source={{ uri: images[globalIdx] }}
-                        style={styles.dashboardImage}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <Text style={styles.rectangleText}>
-                        {inputs[globalIdx] || "Dashboard"}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                  <Button
-                    title={images[globalIdx] ? "Change Image" : "Add Image"}
-                    onPress={() => handlePickImage(globalIdx)}
-                  />
-                  <TextInput
-                    style={styles.input}
-                    value={inputs[globalIdx] || ""}
-                    onChangeText={text => handleInputChange(text, globalIdx)}
-                    placeholder="Enter dashboard name"
-                  />
-                </View>
-              );
-            })}
+            {row.map((project) => (
+              <View key={project.id} style={styles.rectangleContainer}>
+                <TouchableOpacity
+                  style={styles.rectangle}
+                  onPress={() => setCurrentProject(project)}
+                >
+                  {project.imageUri ? (
+                    <Image
+                      source={{ uri: project.imageUri }}
+                      style={styles.dashboardImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Text style={styles.rectangleText}>{project.name}</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            ))}
           </View>
         ))}
+        {/* Add Project Form */}
+        {showAddForm && (
+          <View style={[styles.rectangle, styles.addForm]}>
+            <TextInput
+              style={styles.input}
+              value={newProjectName}
+              onChangeText={setNewProjectName}
+              placeholder="Enter dashboard name"
+            />
+            <Button color={"#2a1c63ff"} title={newProjectImage ? "Change Image" : "Add Image"} onPress={handlePickImage} />
+            {newProjectImage && (
+              <Image source={{ uri: newProjectImage }} style={styles.dashboardImageInput} resizeMode="cover" />
+            )}
+            <Button color={"#2a1c63ff"} title="Add Dashboard" onPress={handleAddProject} />
+            <Button color={"#2a1c63ff"} title="Cancel" onPress={() => setShowAddForm(false)} />
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -112,12 +131,11 @@ const styles = StyleSheet.create({
   splitContainer: {
     flex: 1,
     flexDirection: "row",
-    backgroundColor: "#f5f5f5",
   },
   leftPane: {
     width: 80,
-    backgroundColor: "#e0e0e0",
-    justifyContent: "center",
+    backgroundColor: "#382585ff",
+    justifyContent: "flex-start",
     alignItems: "center",
     paddingVertical: 16,
   },
@@ -127,7 +145,7 @@ const styles = StyleSheet.create({
   },
   rightPane: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#1a113fff",
   },
   rightPaneContent: {
     alignItems: "center",
@@ -150,8 +168,8 @@ const styles = StyleSheet.create({
   },
   rectangle: {
     width: 300,
-    height: 450,
-    backgroundColor: "#90caf9",
+    height: 500,
+    backgroundColor: "#573bc9ff",
     borderRadius: 8,
     marginBottom: 6,
     justifyContent: "center",
@@ -163,19 +181,46 @@ const styles = StyleSheet.create({
     height: "100%",
     borderRadius: 8,
   },
+  dashboardImageInput: {
+    width: "70%",
+    height: "70%",
+    borderRadius: 8,
+  },
   rectangleText: {
     color: "#333",
     fontSize: 20,
     fontWeight: "bold",
+    textAlign: "center",
   },
   input: {
-    width: 100,
+    width: 160,
     height: 32,
-    borderColor: "#ffffffff",
-    borderWidth: 2,
+    borderColor: "#573bc9ff",
+    borderWidth: 1,
     borderRadius: 6,
     paddingHorizontal: 8,
-    backgroundColor: "#fff",
+    backgroundColor: "#423576ff",
     marginTop: 4,
+    marginBottom: 4,
+  },
+  addForm: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    width: 300,
+    height: 500,
+    backgroundColor: "#573bc9ff",
+    borderRadius: 8,
+    marginBottom: 100,
+    overflow: "hidden",
+  },
+  addButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 6,
+    marginVertical: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 120,
   },
 });

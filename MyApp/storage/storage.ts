@@ -3,6 +3,7 @@ import { Project } from "@/models/Project";
 import { Post } from "@/models/Post";
 import projectsJson from "@/data/projects.json";
 
+// dashboard = project for naming sake
 // Load all projects
 export async function getProjects(): Promise<Project[]> {
   const stored = await AsyncStorage.getItem("projects");
@@ -15,11 +16,12 @@ export async function saveProjects(projects: Project[]): Promise<void> {
 }
 
 // Add a project
-export async function addProject(name: string): Promise<Project> {
+export async function addProject(name: string, imageUri: string | null = null): Promise<Project> {
   const projects = await getProjects();
   const newProject: Project = {
     id: Date.now().toString(),
     name,
+    imageUri, // Save imageUri
     posts: []
   };
   projects.push(newProject);

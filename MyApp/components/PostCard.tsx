@@ -1,26 +1,44 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, Image, Button, StyleSheet } from "react-native";
 import { Post } from "@/models/Post";
 
-export default function PostCard({ post }: { post: Post }) {
+interface PostCardProps {
+  post: Post;
+  onUpdatePost: (updated: Post) => void;
+  onPickImage?: (post: Post) => void;
+}
+
+export default function PostCard({ post, onUpdatePost, onPickImage }: PostCardProps) {
   return (
     <View style={styles.card}>
       <Text style={styles.title}>{post.title}</Text>
       <Text style={styles.type}>{post.type}</Text>
-      {post.imageUri && <Text style={styles.imageText}>[Image attached]</Text>}
+
+      {post.imageUri ? (
+        <Image source={{ uri: post.imageUri }} style={styles.image} />
+      ) : (
+        <Text style={styles.noImage}>No image</Text>
+      )}
+
+      {onPickImage && (
+        <Button title="Add / Change Image" onPress={() => onPickImage(post)} />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    padding: 12,
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
-    marginBottom: 10
+    padding: 12,
+    marginBottom: 12,
+    backgroundColor: "#1e1e1e",
   },
-  title: { fontSize: 16, fontWeight: "bold" },
-  type: { color: "gray" },
-  imageText: { color: "#4f46e5", marginTop: 5 }
+  title: { fontSize: 18, fontWeight: "bold", color: "white" },
+  type: { fontSize: 14, color: "gray", marginBottom: 8 },
+  noImage: { fontSize: 12, color: "gray", marginBottom: 8 },
+  image: { width: "100%", height: 200, borderRadius: 8, marginBottom: 8 },
 });
+
