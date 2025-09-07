@@ -1,5 +1,18 @@
-import React, { useState } from "react";
-import { Text, View, PanResponder, Animated, Dimensions, Button, TouchableOpacity, Pressable, TextInput, Modal } from "react-native";
+import React, { useState, useMemo } from "react";
+import {
+  Text,
+  View,
+  PanResponder,
+  Animated,
+  Dimensions,
+  Button,
+  TouchableOpacity,
+  Pressable,
+  TextInput,
+  Modal,
+  StyleSheet,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Project } from "@/models/Project";
 import { Post } from "@/models/Post";
 import PostPage from "@/app/(tabs)/postPage";
@@ -37,6 +50,18 @@ export default function ProjectDashboard({ project, onBack, onUpdateProject }: P
   // Store positions for each post as Animated.ValueXY
   const [positions, setPositions] = useState<{ [id: string]: Animated.ValueXY }>({});
 
+  // --- starfield (visual only)
+  const stars = useMemo(
+    () =>
+      Array.from({ length: 70 }).map(() => ({
+        topPct: Math.random() * 100,
+        leftPct: Math.random() * 100,
+        size: Math.random() * 2 + 1,
+        opacity: Math.random() * 0.6 + 0.25,
+      })),
+    []
+  );
+
   // Initialize positions for each post
   React.useEffect(() => {
     setPositions((prev) => {
@@ -54,57 +79,52 @@ export default function ProjectDashboard({ project, onBack, onUpdateProject }: P
   }, [currentProject.posts.length]);
 
   const addPost = async () => {
-  const newPost: Post = {
-    id: Date.now().toString(),
-    title: "New Post",
-    type: "Custom",
-    imageUri: null,
-    projectId: currentProject.id,
-    notes: "",
-  };
-  // Update in storage
-  const allProjects = await getProjects();
-  const idx = allProjects.findIndex(p => p.id === currentProject.id);
-  if (idx !== -1) {
-    const updatedProject = {
-      ...allProjects[idx],
-      posts: [...allProjects[idx].posts, newPost],
+    const newPost: Post = {
+      id: Date.now().toString(),
+      title: "New Post",
+      type: "Custom",
+      imageUri: null,
+      projectId: currentProject.id,
+      notes: "",
     };
-    allProjects[idx] = updatedProject;
-    await saveProjects(allProjects);
-    setCurrentProject(updatedProject);
-    onUpdateProject(updatedProject);
-  }
-};
+    const allProjects = await getProjects();
+    const idx = allProjects.findIndex((p) => p.id === currentProject.id);
+    if (idx !== -1) {
+      const updatedProject = {
+        ...allProjects[idx],
+        posts: [...allProjects[idx].posts, newPost],
+      };
+      allProjects[idx] = updatedProject;
+      await saveProjects(allProjects);
+      setCurrentProject(updatedProject);
+      onUpdateProject(updatedProject);
+    }
+  };
 
-  // Open a post and reload the latest project from storage after update
   const openPost = (postId: string) => {
     setSelectedPostId(postId);
   };
 
-  // Handle connection logic (project-level)
   const handleNodePress = async (postId: string) => {
     if (connectMode) {
       if (!sourceNodeId) {
-        setSourceNodeId(postId); // Start connection from this node
+        setSourceNodeId(postId);
       } else if (sourceNodeId !== postId) {
-        // Add a new connection at the project level
         const newConnection: Connection = {
           id: Date.now().toString(),
-          name: "", // You can set a default or open a modal for naming
+          name: "",
           postA: sourceNodeId,
           postB: postId,
         };
         await addConnection(currentProject.id, newConnection);
         await reloadProject();
-        setSourceNodeId(sourceNodeId); // Keep source for multi-connection
+        setSourceNodeId(sourceNodeId);
       }
     } else if (!dragMode) {
       openPost(postId);
     }
   };
 
-  // Stop connection mode if clicking on empty space
   const handleBackgroundPress = () => {
     if (connectMode) {
       setConnectMode(false);
@@ -112,7 +132,6 @@ export default function ProjectDashboard({ project, onBack, onUpdateProject }: P
     }
   };
 
-  // Modal for naming relationship (optional, not wired to project-level connections in this sample)
   const saveLabel = () => {
     setLabelModalVisible(false);
     setLabelModalFrom(null);
@@ -120,25 +139,21 @@ export default function ProjectDashboard({ project, onBack, onUpdateProject }: P
     setLabelInput("");
   };
 
-  // Reload the latest project from storage
   const reloadProject = async () => {
     const allProjects = await getProjects();
-    const freshProject = allProjects.find(p => p.id === currentProject.id);
+    const freshProject = allProjects.find((p) => p.id === currentProject.id);
     if (freshProject) setCurrentProject(freshProject);
   };
 
-  // Called after saving a post in PostPage
   const handleUpdateProject = async (updated: Project) => {
-    // Reload the latest project from storage to ensure UI is up-to-date
     const allProjects = await getProjects();
-    const freshProject = allProjects.find(p => p.id === updated.id);
+    const freshProject = allProjects.find((p) => p.id === updated.id);
     if (freshProject) {
       setCurrentProject(freshProject);
       onUpdateProject(freshProject);
     }
   };
 
-  // Draw lines for connections (project-level)
   const renderConnections = () => {
     if (!currentProject.connections) return null;
     return currentProject.connections.map((conn) => {
@@ -146,10 +161,14 @@ export default function ProjectDashboard({ project, onBack, onUpdateProject }: P
       const to = positions[conn.postB];
       if (!from || !to) return null;
       // @ts-ignore
-      const fromX = from.x._value + 40, fromY = from.y._value + 40;
+      const fromX = from.x._value + 40,
+        // @ts-ignore
+        fromY = from.y._value + 40;
       // @ts-ignore
-      const toX = to.x._value + 40, toY = to.y._value + 40;
-      // Label logic can be added here if you wish
+      const toX = to.x._value + 40,
+        // @ts-ignore
+        toY = to.y._value + 40;
+
       return (
         <View
           key={conn.id}
@@ -162,20 +181,8 @@ export default function ProjectDashboard({ project, onBack, onUpdateProject }: P
             pointerEvents: "box-none",
           }}
         >
-          {/* Clickable line using SVG */}
-          <svg
-            width={W}
-            height={H}
-            style={{ position: "absolute", left: 0, top: 0 }}
-          >
-            <line
-              x1={fromX}
-              y1={fromY}
-              x2={toX}
-              y2={toY}
-              stroke="#6366f1"
-              strokeWidth="3"
-            />
+          <svg width={W} height={H} style={{ position: "absolute", left: 0, top: 0 }}>
+            <line x1={fromX} y1={fromY} x2={toX} y2={toY} stroke="#7c83ff" strokeWidth="3" opacity="0.95" />
           </svg>
         </View>
       );
@@ -197,23 +204,47 @@ export default function ProjectDashboard({ project, onBack, onUpdateProject }: P
   }
 
   return (
-    <Pressable style={{ flex: 1, backgroundColor: "#f3f4f6" }} onPress={handleBackgroundPress}>
-      <View style={{ flexDirection: "row", alignItems: "center", padding: 12 }}>
-        <Button title="Back to Dashboard" onPress={onBack} />
-        <Text style={{ fontSize: 24, fontWeight: "bold", marginLeft: 16 }}>
-          {currentProject.name}
-        </Text>
+    <Pressable style={{ flex: 1, backgroundColor: "transparent" }} onPress={handleBackgroundPress}>
+      {/* Night-sky gradient background */}
+      <LinearGradient
+        colors={["#070915", "#0a0f2e", "#16173d"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      {/* Subtle stars */}
+      {stars.map((s, i) => (
+        <View
+          key={i}
+          style={{
+            position: "absolute",
+            top: `${s.topPct}%`,
+            left: `${s.leftPct}%`,
+            width: s.size,
+            height: s.size,
+            borderRadius: s.size / 2,
+            backgroundColor: "#ffffff",
+            opacity: s.opacity,
+          }}
+        />
+      ))}
+
+      {/* Header */}
+      <View style={styles.header}>
+        <Button title="Back to Dashboard" onPress={onBack} color="#3b82f6" />
+        <Text style={styles.titleText}>{currentProject.name}</Text>
         <View style={{ flex: 1, alignItems: "flex-end" }}>
-          <Button title="Add Post" onPress={addPost} />
+          <Button title="Add Post" onPress={addPost} color="#3b82f6" />
         </View>
       </View>
-      <View style={{ flex: 1 }}>
+
+      {/* Canvas */}
+      <View style={styles.canvas}>
         {renderConnections()}
         {currentProject.posts.map((post) => {
           if (!positions[post.id]) return null;
           const pan = positions[post.id];
 
-          // Only enable drag if dragMode is true
           const panResponder = PanResponder.create({
             onStartShouldSetPanResponder: () => dragMode,
             onPanResponderGrant: () => {
@@ -225,10 +256,7 @@ export default function ProjectDashboard({ project, onBack, onUpdateProject }: P
               });
               pan.setValue({ x: 0, y: 0 });
             },
-            onPanResponderMove: Animated.event(
-              [null, { dx: pan.x, dy: pan.y }],
-              { useNativeDriver: false }
-            ),
+            onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], { useNativeDriver: false }),
             onPanResponderRelease: () => {
               pan.flattenOffset();
             },
@@ -251,61 +279,34 @@ export default function ProjectDashboard({ project, onBack, onUpdateProject }: P
                 },
               ]}
             >
-              {/* Move the text above the node */}
+              {/* Label */}
               <Text
-                style={{
-                  color: connectMode && sourceNodeId === post.id ? "#f59e42" : "#6366f1",
-                  fontWeight: "bold",
-                  fontSize: 16,
-                  textAlign: "center",
-                  marginBottom: 6,
-                  userSelect: "none",
-                  cursor: "pointer",
-                }}
+                style={[
+                  styles.nodeLabel,
+                  connectMode && sourceNodeId === post.id && { color: "#fbbf24" },
+                ]}
                 onPress={() => handleNodePress(post.id)}
               >
                 {post.title}
               </Text>
-              <View
-                style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: 40,
-                  backgroundColor: "#6366f1",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderWidth: 3,
-                  borderColor: "#e0e7ff",
-                  userSelect: "none",
-                }}
-              />
+
+              {/* Circle */}
+              <View style={styles.nodeCircle} />
             </Animated.View>
           );
         })}
       </View>
-      {/* Toolbar at the bottom */}
-      <View
-        style={{
-          width: "100%",
-          height: 60,
-          backgroundColor: "#fff",
-          borderTopWidth: 1,
-          borderColor: "#e0e7ff",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-        }}
-      >
+
+      {/* Toolbar */}
+      <View style={styles.toolbar}>
         <TouchableOpacity
-          style={{
-            backgroundColor: dragMode ? "#6366f1" : "#e0e7ff",
-            borderRadius: 30,
-            padding: 10,
-            marginHorizontal: 10,
-          }}
+          style={[
+            styles.toolBtn,
+            {
+              backgroundColor: dragMode ? "#6366f1" : "rgba(198, 205, 255, 0.25)",
+              borderColor: dragMode ? "rgba(255,255,255,0.45)" : "rgba(129,140,248,0.45)",
+            },
+          ]}
           onPress={() => {
             setDragMode((prev) => !prev);
             setConnectMode(false);
@@ -314,13 +315,15 @@ export default function ProjectDashboard({ project, onBack, onUpdateProject }: P
         >
           <FontAwesome name="hand-paper-o" size={28} color={dragMode ? "#fff" : "#6366f1"} />
         </TouchableOpacity>
+
         <TouchableOpacity
-          style={{
-            backgroundColor: connectMode ? "#f59e42" : "#e0e7ff",
-            borderRadius: 30,
-            padding: 10,
-            marginHorizontal: 10,
-          }}
+          style={[
+            styles.toolBtn,
+            {
+              backgroundColor: connectMode ? "#f59e0b" : "rgba(198, 205, 255, 0.25)",
+              borderColor: connectMode ? "rgba(255,255,255,0.45)" : "rgba(129,140,248,0.45)",
+            },
+          ]}
           onPress={() => {
             setConnectMode((prev) => !prev);
             setDragMode(false);
@@ -329,7 +332,8 @@ export default function ProjectDashboard({ project, onBack, onUpdateProject }: P
         >
           <FontAwesome name="share-alt" size={28} color={connectMode ? "#fff" : "#6366f1"} />
         </TouchableOpacity>
-        <Text style={{ fontWeight: "bold", color: "#6366f1", fontSize: 16, marginLeft: 10 }}>
+
+        <Text style={styles.modeText}>
           {dragMode
             ? "Drag Mode: ON"
             : connectMode
@@ -339,39 +343,23 @@ export default function ProjectDashboard({ project, onBack, onUpdateProject }: P
             : "Drag or Connect"}
         </Text>
       </View>
-      {/* Modal for naming relationship (optional, not wired to project-level connections in this sample) */}
+
+      {/* Modal (unchanged logic) */}
       <Modal
         visible={labelModalVisible}
         transparent
         animationType="fade"
         onRequestClose={() => setLabelModalVisible(false)}
       >
-        <View style={{
-          flex: 1,
-          backgroundColor: "rgba(0,0,0,0.3)",
-          justifyContent: "center",
-          alignItems: "center"
-        }}>
-          <View style={{
-            backgroundColor: "#fff",
-            padding: 20,
-            borderRadius: 12,
-            minWidth: 240,
-            alignItems: "center"
-          }}>
-            <Text style={{ fontWeight: "bold", fontSize: 16, marginBottom: 10 }}>Name Relationship</Text>
+        <View style={styles.modalMask}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Name Relationship</Text>
             <TextInput
-              style={{
-                borderWidth: 1,
-                borderColor: "#6366f1",
-                borderRadius: 8,
-                padding: 8,
-                width: 180,
-                marginBottom: 12,
-              }}
+              style={styles.modalInput}
               value={labelInput}
               onChangeText={setLabelInput}
               placeholder="Relationship name"
+              placeholderTextColor="#9aa1ff"
             />
             <View style={{ flexDirection: "row" }}>
               <Button title="Save" onPress={saveLabel} />
@@ -384,3 +372,111 @@ export default function ProjectDashboard({ project, onBack, onUpdateProject }: P
     </Pressable>
   );
 }
+
+/* ========== styles (visual only) ========== */
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    backgroundColor: "rgba(10,12,28,0.55)",
+    borderBottomWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  titleText: {
+    fontSize: 24,
+    fontWeight: "800",
+    marginLeft: 16,
+    color: "#e5e7eb",
+    textShadowColor: "rgba(255,255,255,0.25)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
+  },
+  canvas: {
+    flex: 1,
+    backgroundColor: "rgba(6,9,22,0.12)",
+  },
+  nodeLabel: {
+    color: "#c7d2fe",
+    fontWeight: "800",
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 6,
+    textShadowColor: "rgba(0,0,0,0.35)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+    userSelect: "none",
+  },
+  nodeCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: "#5865f2",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.35)",
+    shadowColor: "#4f46e5",
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
+  toolbar: {
+    width: "100%",
+    height: 68,
+    backgroundColor: "rgba(13,16,34,0.72)",
+    borderTopWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    paddingHorizontal: 10,
+  },
+  toolBtn: {
+    borderRadius: 32,
+    padding: 10,
+    marginHorizontal: 10,
+    borderWidth: 1,
+  },
+  modeText: {
+    fontWeight: "700",
+    color: "#c7d2fe",
+    fontSize: 16,
+    marginLeft: 10,
+  },
+  modalMask: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalCard: {
+    backgroundColor: "rgba(12,14,30,0.95)",
+    padding: 20,
+    borderRadius: 12,
+    minWidth: 260,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(129,140,248,0.35)",
+  },
+  modalTitle: {
+    fontWeight: "800",
+    fontSize: 16,
+    marginBottom: 10,
+    color: "#e5e7eb",
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: "#7c83ff",
+    borderRadius: 8,
+    padding: 8,
+    width: 200,
+    marginBottom: 12,
+    color: "#e5e7eb",
+    backgroundColor: "rgba(18,22,50,0.6)",
+  },
+});
